@@ -11,8 +11,8 @@ contract Factory is OwnableContract {
     struct Request {
         address requester; // sender of the request.
         uint amount; // amount of wghost to mint/burn.
-        bytes32 ghostDepositAddress; // custodian's ghost address in mint, merchant's ghost address in burn.
-        bytes32 ghostTxid; // ghost txid for sending/redeeming ghost in the mint/burn process.
+        string ghostDepositAddress; // custodian's ghost address in mint, merchant's ghost address in burn.
+        string ghostTxid; // ghost txid for sending/redeeming ghost in the mint/burn process.
         uint nonce; // serial number allocated for each request.
         uint timestamp; // time of the request creation.
         RequestStatus status; // status of the request.
@@ -22,10 +22,10 @@ contract Factory is OwnableContract {
 
     // mapping between merchant to the corresponding custodian deposit address, used in the minting process.
     // by using a different deposit address per merchant the custodian can identify which merchant deposited.
-    mapping(address=>bytes32) public custodianGhostDepositAddress;
+    mapping(address=>string) public custodianGhostDepositAddress;
 
     // mapping between merchant to the its deposit address where ghost should be moved to, used in the burning process.
-    mapping(address=>bytes32) public merchantGhostDepositAddress;
+    mapping(address=>string) public merchantGhostDepositAddress;
 
     // mapping between a mint request hash and the corresponding request nonce. 
     mapping(bytes32=>uint) public mintRequestNonce;
@@ -52,11 +52,11 @@ contract Factory is OwnableContract {
         _;
     }
 
-    event CustodianGhostDepositAddressSet(address indexed merchant, address indexed sender, bytes32 ghostDepositAddress);
+    event CustodianGhostDepositAddressSet(address indexed merchant, address indexed sender, string ghostDepositAddress);
 
     function setCustodianGhostDepositAddress(
         address merchant,
-        bytes32 ghostDepositAddress
+        string ghostDepositAddress
     )
         external
         onlyCustodian
@@ -71,9 +71,9 @@ contract Factory is OwnableContract {
         return true;
     }
 
-    event MerchantGhostDepositAddressSet(address indexed merchant, bytes32 ghostDepositAddress);
+    event MerchantGhostDepositAddressSet(address indexed merchant, string ghostDepositAddress);
 
-    function setMerchantGhostDepositAddress(bytes32 ghostDepositAddress) external onlyMerchant returns (bool) {
+    function setMerchantGhostDepositAddress(string ghostDepositAddress) external onlyMerchant returns (bool) {
         require(!isEmptyString(ghostDepositAddress), "invalid ghost deposit address");
 
         merchantGhostDepositAddress[msg.sender] = ghostDepositAddress;
@@ -85,16 +85,16 @@ contract Factory is OwnableContract {
         uint indexed nonce,
         address indexed requester,
         uint amount,
-        bytes32 ghostDepositAddress,
-        bytes32 ghostTxid,
+        string ghostDepositAddress,
+        string ghostTxid,
         uint timestamp,
         bytes32 requestHash
     );
 
     function addMintRequest(
         uint amount,
-        bytes32 ghostTxid,
-        bytes32 ghostDepositAddress
+        string ghostTxid,
+        string ghostDepositAddress
     )
         external
         onlyMerchant
@@ -143,8 +143,8 @@ contract Factory is OwnableContract {
         uint indexed nonce,
         address indexed requester,
         uint amount,
-        bytes32 ghostDepositAddress,
-        bytes32 ghostTxid,
+        string ghostDepositAddress,
+        string ghostTxid,
         uint timestamp,
         bytes32 requestHash
     );
@@ -174,8 +174,8 @@ contract Factory is OwnableContract {
         uint indexed nonce,
         address indexed requester,
         uint amount,
-        bytes32 ghostDepositAddress,
-        bytes32 ghostTxid,
+        string ghostDepositAddress,
+        string ghostTxid,
         uint timestamp,
         bytes32 requestHash
     );
@@ -204,20 +204,20 @@ contract Factory is OwnableContract {
         uint indexed nonce,
         address indexed requester,
         uint amount,
-        bytes32 ghostDepositAddress,
+        string ghostDepositAddress,
         uint timestamp,
         bytes32 requestHash
     );
 
     function burn(uint amount) external onlyMerchant returns (bool) {
-        bytes32 memory ghostDepositAddress = merchantGhostDepositAddress[msg.sender];
+        string memory ghostDepositAddress = merchantGhostDepositAddress[msg.sender];
         require(!isEmptyString(ghostDepositAddress), "merchant ghost deposit address was not set"); 
 
         uint nonce = burnRequests.length;
         uint timestamp = getTimestamp();
 
         // set txid as empty since it is not known yet.
-        bytes32 memory ghostTxid = "";
+        string memory ghostTxid = "";
 
         Request memory request = Request({
             requester: msg.sender,
@@ -244,13 +244,13 @@ contract Factory is OwnableContract {
         uint indexed nonce,
         address indexed requester,
         uint amount,
-        bytes32 ghostDepositAddress,
-        bytes32 ghostTxid,
+        string ghostDepositAddress,
+        string ghostTxid,
         uint timestamp,
         bytes32 inputRequestHash
     );
 
-    function confirmBurnRequest(bytes32 requestHash, bytes32 ghostTxid) external onlyCustodian returns (bool) {
+    function confirmBurnRequest(bytes32 requestHash, string ghostTxid) external onlyCustodian returns (bool) {
         uint nonce;
         Request memory request;
 
@@ -279,15 +279,15 @@ contract Factory is OwnableContract {
             uint requestNonce,
             address requester,
             uint amount,
-            bytes32 ghostDepositAddress,
-            bytes32 ghostTxid,
+            string ghostDepositAddress,
+            string ghostTxid,
             uint timestamp,
-            bytes32 status,
+            string status,
             bytes32 requestHash
         )
     {
         Request memory request = mintRequests[nonce];
-        bytes32 memory statusString = getStatusString(request.status); 
+        string memory statusString = getStatusString(request.status); 
 
         requestNonce = request.nonce;
         requester = request.requester;
@@ -310,15 +310,15 @@ contract Factory is OwnableContract {
             uint requestNonce,
             address requester,
             uint amount,
-            bytes32 ghostDepositAddress,
-            bytes32 ghostTxid,
+            string ghostDepositAddress,
+            string ghostTxid,
             uint timestamp,
-            bytes32 status,
+            string status,
             bytes32 requestHash
         )
     {
         Request storage request = burnRequests[nonce];
-        bytes32 memory statusString = getStatusString(request.status); 
+        string memory statusString = getStatusString(request.status); 
 
         requestNonce = request.nonce;
         requester = request.requester;
@@ -369,15 +369,15 @@ contract Factory is OwnableContract {
         ));
     }
 
-    function compareStrings (bytes32 a, bytes32 b) internal pure returns (bool) {
+    function compareStrings (string a, string b) internal pure returns (bool) {
         return (keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b)));
     }
 
-    function isEmptyString (bytes32 a) internal pure returns (bool) {
+    function isEmptyString (string a) internal pure returns (bool) {
         return (compareStrings(a, ""));
     }
 
-    function getStatusString(RequestStatus status) internal pure returns (bytes32) {
+    function getStatusString(RequestStatus status) internal pure returns (string) {
         if (status == RequestStatus.PENDING) {
             return "pending";
         } else if (status == RequestStatus.CANCELED) {

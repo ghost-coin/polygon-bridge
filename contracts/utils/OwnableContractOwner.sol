@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "../utils/OwnableContract.sol";
+import "./OwnableContract.sol";
 
 
 contract OwnableContractOwner is OwnableContract {

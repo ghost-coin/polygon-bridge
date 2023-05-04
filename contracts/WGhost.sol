@@ -1,26 +1,38 @@
-pragma solidity 0.4.24;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
 
-import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/BurnableToken.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/PausableToken.sol";
-import "./utils/OwnableContract.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
+contract WGhost is ERC20, ERC20Burnable, Pausable, Ownable {
+    constructor() ERC20("WGhost", "WGHOST") {}
+    
+    event WGhostBurnt(address from, string ghostAddr, uint256 amount);
 
-contract WGhost is StandardToken, DetailedERC20("Wrapped Ghost", "WGhost", 8),
-    MintableToken, BurnableToken, PausableToken, OwnableContract {
-
-    function burn(uint value) public onlyOwner {
-        super.burn(value);
+    function pause() public onlyOwner {
+        _pause();
+    }
+    
+    function unpause() public onlyOwner {
+        _unpause();
     }
 
-    function finishMinting() public onlyOwner returns (bool) {
-        return false;
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
     }
 
-    function renounceOwnership() public onlyOwner {
-        revert("renouncing ownership is blocked");
+    function burnWGhost(string memory ghostAddress, uint256 amount) public {
+        _burn(msg.sender, amount);
+        emit WGhostBurnt(msg.sender, ghostAddress, amount);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount)
+        internal
+        whenNotPaused
+        override
+    {
+        super._beforeTokenTransfer(from, to, amount);
     }
 }
-

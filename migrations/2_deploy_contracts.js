@@ -1,5 +1,8 @@
-const WGhost = artifacts.require("WGhost");
+const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
-module.exports = function(deployer) {
-  deployer.deploy(WGhost);
+const WGhost = artifacts.require('WGhostV1');
+
+module.exports = async function (deployer) {
+  const instance = await deployProxy(WGhost, { deployer, kind: 'uups'});
+  console.log('Deployed', instance.address);
 };

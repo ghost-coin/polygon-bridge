@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-contract WGhost is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+contract WGhostV1 is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
     using ECDSA for bytes32;
 
     address public contractOwner;
@@ -25,9 +25,7 @@ contract WGhost is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgr
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
+    constructor() initializer {}
 
     function initialize() initializer public {
         __ERC20_init("Wrapped Ghost", "WGhost");

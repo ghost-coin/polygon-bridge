@@ -1,0 +1,12 @@
+// Example to use while doing upgrades
+
+const { upgradeProxy } = require('@openzeppelin/truffle-upgrades');
+
+const WGhost = artifacts.require('WGhost');
+const WGhostV2 = artifacts.require('WGhostV2');
+
+module.exports = async function (deployer) {
+  const existing = await WGhost.deployed();
+  const instance = await upgradeProxy(existing.address, WGhostV2, { deployer });
+  console.log("Upgraded", instance.address);
+};

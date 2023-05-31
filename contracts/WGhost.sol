@@ -13,7 +13,7 @@ contract WGhost is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgr
     address public contractOwner;
     
     event WGhostMinted(address receiver, string ghostTxID, uint256 amount);
-    event WGhostBurned(address burner, string txID, uint256 amount);
+    event WGhostBurned(address burner, string ghostAddr, uint256 amount);
 
     mapping(address => bool) public approvedSigners;
     mapping(string => bool) public seenTxIDs;
@@ -46,7 +46,7 @@ contract WGhost is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgr
     {}
 
 
-    function addTxID(string txid) external { 
+    function addTxID(string memory txid) internal { 
         require(!seenTxIDs[txid], "Transaction with the given ID already processed");
         seenTxIDs[txid] = true;
     }
@@ -134,17 +134,18 @@ contract WGhost is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgr
         }
 
         // require(ownerSignatureFound, "Owner signature required");
-        require(validSignatureCount >= 1, "Invalid signatures");
+        require(validSignatureCount >= 2, "Invalid signatures");
 
         require(totalSupply() + amount <= lockedGhostSupply, "Exceeded token limit");
 
         addTxID(ghostTXID);
         // Perform mint operation
         _mint(receiver, amount);
-        emit WGhostMinted(receiver, ghostTxID, amount);
+        emit WGhostMinted(receiver, ghostTXID, amount);
     }
 
-    function burn() external { 
-        emit WGhostBurned(burner, txID, amount);
+    function burn(string memory ghostAddress, uint256 amount) external { 
+        _burn(msg.sender, amount);
+        emit WGhostBurned(msg.sender, ghostAddress, amount);
     }
 }

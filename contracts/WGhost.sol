@@ -7,10 +7,12 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-contract WGhostV1 is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+contract WrappedGhost is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
     using ECDSA for bytes32;
 
     address public contractOwner;
+    
+    uint32 public bridgeMin;
     
     event WGhostMinted(address receiver, string ghostTxID, uint256 amount);
     event WGhostBurned(address burner, string ghostAddr, uint256 amount);
@@ -32,6 +34,7 @@ contract WGhostV1 is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUp
 
         contractOwner = msg.sender;
         approvedSigners[contractOwner] = true;
+        bridgeMin = 35;
     }
 
     function _authorizeUpgrade(address newImplementation)
@@ -62,6 +65,11 @@ contract WGhostV1 is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUp
         approvedSigners[signer] = false;
 
     }
+
+    function updateBridgeMin(uint32 newBridgeMin) external onlyOwner {
+        require(msg.sender == contractOwner, "Only contract owner can update bridge min");
+        bridgeMin = newBridgeMin;
+    } 
     
     function prefixedHash(bytes32 message) internal pure returns (bytes32) {
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
@@ -78,6 +86,8 @@ contract WGhostV1 is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUp
         bytes32 r,
         bytes32 s
     ) external {
+
+        require(approvedSigners[msg.sender], "Mint must be called by approved signer");
 
         bytes32 messageHash = keccak256(abi.encodePacked(
             address(uint160(receiver)), // eth address to receive tokens
@@ -98,7 +108,8 @@ contract WGhostV1 is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUp
         emit WGhostMinted(receiver, ghostTXID, amount);
     }
 
-    function burn(string memory ghostAddress, uint256 amount) external { 
+    function burn(string memory ghostAddress, uint256 amount) external {
+        require(amount < bridgeMin, "Amount below min bridge amount."); 
         _burn(msg.sender, amount);
         emit WGhostBurned(msg.sender, ghostAddress, amount);
     }

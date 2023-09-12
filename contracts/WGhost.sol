@@ -109,7 +109,7 @@ contract WrappedGhost is Initializable, ERC20Upgradeable, OwnableUpgradeable, UU
     }
 
     function burn(string memory ghostAddress, uint256 amount) external {
-        require(amount < bridgeMin, "Amount below min bridge amount."); 
+        require(amount >= bridgeMin, "Amount below min bridge amount."); 
         _burn(msg.sender, amount);
         emit WGhostBurned(msg.sender, ghostAddress, amount);
     }

@@ -9,10 +9,8 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 contract WrappedGhost is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
     using ECDSA for bytes32;
-
-    address public contractOwner;
     
-    uint32 public bridgeMin;
+    uint256 public bridgeMin;
     
     event WGhostMinted(address receiver, string ghostTxID, uint256 amount);
     event WGhostBurned(address burner, string ghostAddr, uint256 amount);
@@ -32,9 +30,8 @@ contract WrappedGhost is Initializable, ERC20Upgradeable, OwnableUpgradeable, UU
         __Ownable_init();
         __UUPSUpgradeable_init();
 
-        contractOwner = msg.sender;
-        approvedSigners[contractOwner] = true;
-        bridgeMin = 35;
+        approvedSigners[msg.sender] = true;
+        bridgeMin = 3500000000;
     }
 
     function _authorizeUpgrade(address newImplementation)
@@ -50,7 +47,6 @@ contract WrappedGhost is Initializable, ERC20Upgradeable, OwnableUpgradeable, UU
     }
 
     function addSigner(address newSigner) external onlyOwner {
-        require(msg.sender == contractOwner, "Only contract owner can add a signer");
         require(newSigner != address(0), "Invalid signer address");
         require(!approvedSigners[newSigner], "Signer already added");
 
@@ -58,16 +54,13 @@ contract WrappedGhost is Initializable, ERC20Upgradeable, OwnableUpgradeable, UU
     }
 
     function removeSigner(address signer) external onlyOwner {
-        require(msg.sender == contractOwner, "Only contract owner can remove a signer");
-        require(signer != contractOwner, "Cannot remove contract owner");
         require(approvedSigners[signer], "Signer is not approved");
 
         approvedSigners[signer] = false;
 
     }
 
-    function updateBridgeMin(uint32 newBridgeMin) external onlyOwner {
-        require(msg.sender == contractOwner, "Only contract owner can update bridge min");
+    function updateBridgeMin(uint256 newBridgeMin) external onlyOwner {
         bridgeMin = newBridgeMin;
     } 
     
